@@ -1,33 +1,42 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
 app = Flask(__name__)
 
-FRESHDESK_API_KEY = 'MWyf7mZdTonnazIGTw15'
-FRESHDESK_URL = 'reeftechnology.freshdesk.com'
+# Freshdesk API configuration
+FRESHDESK_DOMAIN = os.environ.get('FRESHDESK_DOMAIN', 'reeftechnology')
+FRESHDESK_API_KEY = os.environ.get('FRESHDESK_API_KEY', 'MWyf7mZdTonnazIGTw15')
+FRESHDESK_API_ENDPOINT = f'https://{FRESHDESK_DOMAIN}.freshdesk.com/api/v2/tickets'
+
+@app.route('/')
+def home():
+    return "Freshdesk Ticket Creation Service"
 
 @app.route('/create_ticket', methods=['POST'])
 def create_ticket():
     data = request.json
-    ticket_data = {
-        "email": data['email'],
-        "subject": data['subject'],
-        "description": data['description'],
-        "priority": data.get('priority', 1),
-        "status": data.get('status', 2),
-        "source": data.get('source', 1),
+    
+    # Prepare the ticket data
+    ticket = {
+        'subject': data.get('subject'),
+        'description': data.get('description'),
+        'email': data.get('email'),
+        'priority': data.get('priority', 2),
+        'status': data.get('status', 2)
     }
-
+    
+    # Make a request to Freshdesk API
     response = requests.post(
-        FRESHDESK_URL,
-        json=ticket_data,
+        FRESHDESK_API_ENDPOINT,
+        json=ticket,
         auth=(FRESHDESK_API_KEY, 'X')
     )
-
+    
     if response.status_code == 201:
-        return jsonify({"message": "Ticket created successfully", "ticket_id": response.json()['id']})
+        return jsonify({'message': 'Ticket created successfully', 'ticket': response.json()}), 201
     else:
-        return jsonify({"message": "Failed to create ticket", "error": response.text}), 400
+        return jsonify({'error': 'Failed to create ticket', 'details': response.text}), response.status_code
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
