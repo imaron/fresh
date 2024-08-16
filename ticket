@@ -19,7 +19,7 @@ def create_ticket():
     }
 
     response = requests.post(
-        reeftechnology.freshdesk.com,
+        FRESHDESK_URL,
         json=ticket_data,
         auth=(FRESHDESK_API_KEY, 'X')
     )
