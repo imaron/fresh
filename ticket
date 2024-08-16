@@ -1,0 +1,33 @@
+from flask import Flask, request, jsonify
+import requests
+
+app = Flask(__name__)
+
+FRESHDESK_API_KEY = 'MWyf7mZdTonnazIGTw15'
+FRESHDESK_URL = 'reeftechnology.freshdesk.com'
+
+@app.route('/create_ticket', methods=['POST'])
+def create_ticket():
+    data = request.json
+    ticket_data = {
+        "email": data['email'],
+        "subject": data['subject'],
+        "description": data['description'],
+        "priority": data.get('priority', 1),
+        "status": data.get('status', 2),
+        "source": data.get('source', 1),
+    }
+
+    response = requests.post(
+        reeftechnology.freshdesk.com,
+        json=ticket_data,
+        auth=(FRESHDESK_API_KEY, 'X')
+    )
+
+    if response.status_code == 201:
+        return jsonify({"message": "Ticket created successfully", "ticket_id": response.json()['id']})
+    else:
+        return jsonify({"message": "Failed to create ticket", "error": response.text}), 400
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)
